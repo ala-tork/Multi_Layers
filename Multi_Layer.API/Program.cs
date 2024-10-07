@@ -15,9 +15,17 @@ namespace Multi_Layer.API
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddControllers();
-            builder.Services.AddDbContext<ApplicationDbContext>(op => {
-                op.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-                });
+            /*            builder.Services.AddDbContext<ApplicationDbContext>(op => {
+                            op.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+                            });*/
+
+            // db connection getting connectionString from docker compse
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                        ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+            
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
 
             builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
@@ -31,6 +39,14 @@ namespace Multi_Layer.API
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            // ensure database creating
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                dbContext.Database.Migrate();
+            }
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

@@ -1,0 +1,39 @@
+# services:
+#   multi_layer.api:
+#     image: ${DOCKER_REGISTRY-}multilayerapi
+#     build:
+#       context: .
+#       dockerfile: Multi_Layer.API/Dockerfile
+
+version: '3.8'
+
+services:
+  multi_layer.api:
+    image: ${DOCKER_REGISTRY-}multilayerapi
+    build:
+      context: .
+      dockerfile: Multi_Layer.API/Dockerfile
+    ports:
+      - "5000:80"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DATABASE_URL=Host=db;Database=mydb;Username=postgres;Password=mysecretpassword
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+  
+
+# docker-compose up --build
